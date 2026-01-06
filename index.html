@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Product Manager</title>
+    <style>
+        body { font-family: sans-serif; margin: 40px; background: #f4f4f4; }
+        .container { background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+        th, td { padding: 10px; border: 1px solid #ddd; text-align: left; }
+        th { background: #0078d4; color: white; }
+        .form-group { margin-bottom: 10px; }
+        button { cursor: pointer; background: #28a745; color: white; border: none; padding: 8px 15px; border-radius: 4px; }
+        .btn-delete { background: #dc3545; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h2>Add New Product</h2>
+    <div class="form-group">
+        <input type="text" id="name" placeholder="Product Name">
+        <input type="number" id="price" placeholder="Price">
+        <button onclick="addProduct()">Add Product</button>
+    </div>
+
+    <h2>Product List</h2>
+    <table id="productTable">
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>Name</th>
+                <th>Price</th>
+                <th>Action</th>
+            </tr>
+        </thead>
+        <tbody></tbody>
+    </table>
+</div>
+
+<script>
+    const API_URL = 'http://localhost:3000/products';
+
+    // 1. Fetch and display products
+    async function loadProducts() {
+        const response = await fetch(API_URL);
+        const data = await response.json();
+        const tbody = document.querySelector('#productTable tbody');
+        tbody.innerHTML = ''; // Clear table
+        
+        data.forEach(p => {
+            tbody.innerHTML += `
+                <tr>
+                    <td>${p.Id}</td>
+                    <td>${p.Name}</td>
+                    <td>$${p.Price}</td>
+                    <td><button class="btn-delete" onclick="deleteProduct(${p.Id})">Delete</button></td>
+                </tr>`;
+        });
+    }
+
+    // 2. Add a product
+    async function addProduct() {
+        const name = document.getElementById('name').value;
+        const price = document.getElementById('price').value;
+
+        await fetch(API_URL, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ Name: name, Price: price })
+        });
+        
+        loadProducts(); // Refresh list
+    }
+
+    // 3. Delete a product
+    async function deleteProduct(id) {
+        await fetch(`${API_URL}/${id}`, { method: 'DELETE' });
+        loadProducts(); // Refresh list
+    }
+
+    // Initial load
+    loadProducts();
+</script>
+</body>
+</html>
