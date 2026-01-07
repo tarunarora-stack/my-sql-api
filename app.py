@@ -2,6 +2,7 @@ import streamlit as st
 import psycopg2
 import os
 import pandas as pd
+
 from io import BytesIO
 
 st.set_page_config(page_title="Product Manager", layout="wide")
@@ -110,6 +111,41 @@ if not df.empty:
         f"{row.name} (₹ {row.price:,.2f})": row.id
         for _, row in df.iterrows()
     }
+st.subheader("📥 Download Sample Excel File")
+st.download_button(
+    label="Download Sample Template",
+    data=open("products_sample.xlsx", "rb").read(),
+    file_name="products_sample.xlsx",
+    mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+)
+st.subheader("📂 Import Products from Excel")
+
+uploaded_file = st.file_uploader(
+    "Upload filled Excel file (Product Name, Price)",
+    type=["xlsx"]
+)
+
+def import_products(file):
+    df = pd.read_excel(file)
+    # Validate columns
+    if "Product Name" not in df.columns or "Price" not in df.columns:
+        st.error("Excel must have 'Product Name' and 'Price' columns")
+        return
+    # Insert into DB
+    for _, row in df.iterrows():
+        name = str(row["Product Name"]).strip()
+        try:
+            price = float(row["Price"])
+        except:
+            st.warning(f"Invalid price for {name}, skipped")
+            continue
+        if name:
+            add_product(name, price)
+
+if uploaded_file:
+    import_products(uploaded_file)
+    st.success("Products imported successfully!")
+    st.rerun()
 
     selected = st.selectbox("Select Product", product_map.keys())
     selected_id = product_map[selected]
